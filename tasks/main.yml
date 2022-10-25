@@ -1,19 +1,40 @@
 ---
 # tasks file for vector-role
-# Скачивание rpm пакета vector
-- name: Get Vector distrib
+# Скачивание пакета vector
+#   rpm
+- name: Get Vector distrib <CentOS>
   ansible.builtin.get_url:
-    url: "https://packages.timber.io/vector/{{ vector_vers }}/vector-{{ vector_vers }}-1.{{ ansible_architecture }}.rpm"
+    url: "https://packages.timber.io/vector/{{ vector_vers }}/vector-{{ vector_vers }}-1.x86_64.rpm"
     dest: "./vector-{{ vector_vers }}.{{ ansible_architecture }}.rpm"
     mode: 0644
-# Установка rpm пакета vector
-- name: Install Vector packages
+  when: ansible_facts.distribution == 'CentOS'
+#   deb
+- name: Get Vector distrib <Ubuntu>
+  ansible.builtin.get_url:
+    url: "https://packages.timber.io/vector/{{ vector_vers }}/vector_{{ vector_vers }}-1_amd64.deb"
+    dest: "./vector-{{ vector_vers }}.{{ ansible_architecture }}.deb"
+    mode: 0644
+  when: ansible_facts.distribution == 'Ubuntu'
+
+# Установка пакета vector
+#   rpm
+- name: Install Vector packages <CentOS>
   become: true
   ansible.builtin.yum:
     disable_gpg_check: true
     name: vector-{{ vector_vers }}.{{ ansible_architecture }}.rpm
     state: present
   notify: Start Vector service
+  when: ansible_facts.distribution == 'CentOS'
+#   deb
+- name: Install Vector packages <Ubuntu>
+  become: true
+  ansible.builtin.apt:
+    deb: vector-{{ vector_vers }}.{{ ansible_architecture }}.deb
+    state: present
+  notify: Start Vector service
+  when: ansible_facts.distribution == 'Ubuntu'
+
 # Создание файла конфигурации для vector.
 - name: Deploy config Vector
   ansible.builtin.template:
